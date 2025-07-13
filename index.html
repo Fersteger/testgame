@@ -24,6 +24,7 @@ let canvasWidth = 800;
 let canvasHeight = 600;
 let offsetX;
 let offsetY;
+let isMobile = window.innerWidth < 500; // Flag for mobile detection
 
 const heightPixel = 8;
 const extrudeDY = -heightPixel;
@@ -62,7 +63,7 @@ function initializeTiles() {
 
 function initializeButtons() {
   buttons = [];
-  if (canvasWidth < 500) { // Mobile threshold (e.g., iPhone SE ~320px)
+  if (isMobile) {
     let buttonSize = canvasWidth / 5;
     for (let i = 0; i < 5; i++) {
       buttons.push({ x: (i * buttonSize) + (buttonSize / 2), y: 10, type: i, size: buttonSize - 10 });
@@ -78,6 +79,7 @@ function windowResized() {
   resizeCanvas(windowWidth * 0.9, windowHeight * 0.9);
   canvasWidth = width;
   canvasHeight = height;
+  isMobile = window.innerWidth < 500; // Update mobile flag on resize
   tileSize = Math.min(canvasWidth, canvasHeight) / 16;
   tileHeight = tileSize / 2;
   offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
@@ -260,7 +262,7 @@ function draw() {
   // Draw UI window
   fill(34, 38, 57); // #222639
   noStroke();
-  if (canvasWidth < 500) {
+  if (isMobile) {
     rect(0, 100, canvasWidth, canvasHeight - 100, 10); // Full-width window on mobile
   } else {
     rect(canvasWidth - 125, 75, 100, 320, 10); // Right-side window on desktop
@@ -270,7 +272,7 @@ function draw() {
   textAlign(CENTER);
   textSize(16);
   fill(255);
-  if (canvasWidth < 500) {
+  if (isMobile) {
     text(tileNames[selectedTileType] || 'None', canvasWidth / 2, 30); // Mobile: above buttons at top
   } else {
     text(tileNames[selectedTileType] || 'None', canvasWidth - 50, 50); // Desktop: centered above buttons
@@ -297,7 +299,7 @@ function draw() {
 }
 
 function placeTile(force = false) {
-  let offsetX = (canvasWidth - (gridSize * tileSize)) / 2;
+  let offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
   let offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
   let dx = mouseX - offsetX;
   let dy = mouseY - offsetY;
