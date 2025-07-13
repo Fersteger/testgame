@@ -1,372 +1,356 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2299.6">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  <title>Isometric Tilemap Game</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+  <style>
+    body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(#353458, #251725); overflow: hidden; }
+    canvas { display: block; max-width: 100%; max-height: 100vh; }
   </style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;Isometric Tilemap Game&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"&gt;&lt;/script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(#353458, #251725); overflow: hidden; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>canvas { display: block; max-width: 100%; max-height: 100vh; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1">&lt;script&gt;</p>
-<p class="p1">let tiles = [];</p>
-<p class="p1">let tileSize = 48;</p>
-<p class="p1">let tileHeight = 24;</p>
-<p class="p1">let gridSize = 12;</p>
-<p class="p1">let selectedTileType = 0;</p>
-<p class="p1">let buttons = [];</p>
-<p class="p1">let wasButtonClick = false;</p>
-<p class="p1">let fallingTiles = [];</p>
-<p class="p1">let lastPlacedI = -1;</p>
-<p class="p1">let lastPlacedJ = -1;</p>
-<p class="p1">let canvasWidth = 800;</p>
-<p class="p1">let canvasHeight = 600;</p>
-<p class="p1">let offsetX;</p>
-<p class="p1">let offsetY;</p>
-<p class="p2"><br></p>
-<p class="p1">const heightPixel = 8;</p>
-<p class="p1">const extrudeDY = -heightPixel;</p>
-<p class="p1">const fallFromHeight = -300;</p>
-<p class="p2"><br></p>
-<p class="p1">const tileTypes = [</p>
-<p class="p1"><span class="Apple-converted-space">  </span>{ base: { r: 19, g: 12, b: 28 } }, // Ringo</p>
-<p class="p1"><span class="Apple-converted-space">  </span>{ base: { r: 57, g: 33, b: 54 } }, // Bingo</p>
-<p class="p1"><span class="Apple-converted-space">  </span>{ base: { r: 138, g: 81, b: 72 } }, // Jingo</p>
-<p class="p1"><span class="Apple-converted-space">  </span>{ base: { r: 187, g: 140, b: 135 } }, // Tango</p>
-<p class="p1"><span class="Apple-converted-space">  </span>{ base: { r: 141, g: 66, b: 66 } }<span class="Apple-converted-space">  </span>// Mango</p>
-<p class="p1">];</p>
-<p class="p2"><br></p>
-<p class="p1">const tileNames = ['Ringo', 'Bingo', 'Jingo', 'Tango', 'Mango'];</p>
-<p class="p2"><br></p>
-<p class="p1">function setup() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>resizeCanvas(windowWidth * 0.9, windowHeight * 0.9);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>canvasWidth = width;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>canvasHeight = height;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>tileSize = Math.min(canvasWidth, canvasHeight) / 16;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>tileHeight = tileSize / 2;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>initializeTiles();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>initializeButtons();</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">function initializeTiles() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>for (let i = 0; i &lt; gridSize; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>tiles[i] = [];</p>
-<p class="p1"><span class="Apple-converted-space">    </span>for (let j = 0; j &lt; gridSize; j++) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>tiles[i][j] = { stack: [], dropAnimStart: 0, dropOffset: 0 };</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">function initializeButtons() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>buttons = [];</p>
-<p class="p1"><span class="Apple-converted-space">  </span>if (canvasWidth &lt; 500) { // Mobile threshold (e.g., iPhone SE ~320px)</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let buttonSize = canvasWidth / 6;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>for (let i = 0; i &lt; 5; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>buttons.push({ x: (i + 0.5) * buttonSize, y: 10, type: i, size: buttonSize - 10 });</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>for (let i = 0; i &lt; 5; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>buttons.push({ x: canvasWidth - 100, y: 100 + i * 60, type: i, size: 50 });</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">function windowResized() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>resizeCanvas(windowWidth * 0.9, windowHeight * 0.9);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>canvasWidth = width;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>canvasHeight = height;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>tileSize = Math.min(canvasWidth, canvasHeight) / 16;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>tileHeight = tileSize / 2;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>initializeTiles();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>initializeButtons();</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">function draw() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>clear();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Draw floor grid</p>
-<p class="p1"><span class="Apple-converted-space">  </span>for (let i = 0; i &lt; gridSize; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>for (let j = 0; j &lt; gridSize; j++) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>let x = offsetX + (i - j) * tileSize / 2;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>let y = offsetY + (i + j) * tileHeight / 2;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>push();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>translate(x, y);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>stroke(0, 255, 255);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>strokeWeight(0.5);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>noFill();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>beginShape();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>vertex(-tileSize / 2, 0);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>vertex(0, -tileHeight / 2);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>vertex(tileSize / 2, 0);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>vertex(0, tileHeight / 2);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>endShape(CLOSE);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>pop();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Draw falling tiles</p>
-<p class="p1"><span class="Apple-converted-space">  </span>for (let fi = fallingTiles.length - 1; fi &gt;= 0; fi--) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let ft = fallingTiles[fi];</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let t = (millis() - ft.startTime) / 2000;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (t &gt; 1) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>fallingTiles.splice(fi, 1);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>continue;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let prog = easeOutQuad(t);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let curY = ft.posY + prog * 1200;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let curX = ft.posX;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let rot = prog * 720 * ft.rotationSpeed;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>let baseCol = tileTypes[ft.type].base;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let topR = baseCol.r;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let topG = baseCol.g;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let topB = baseCol.b;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let sideR = topR * 0.7 + 15;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let sideG = topG * 0.7 + 10;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let sideB = topB * 0.7;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let strokeR = sideR * 0.8;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let strokeG = sideG * 0.8;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let strokeB = sideB * 0.8;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>push();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>translate(curX, curY);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>rotate(rot);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>stroke(strokeR, strokeG, strokeB);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>strokeWeight(0.5);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>fill(sideR, sideG, sideB, 255);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>beginShape();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>vertex(-tileSize / 2, 0);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>vertex(-tileSize / 2, extrudeDY);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>vertex(0, tileHeight / 2 + extrudeDY);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>vertex(0, tileHeight / 2);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>endShape(CLOSE);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>beginShape();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>vertex(tileSize / 2, 0);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>vertex(tileSize / 2, extrudeDY);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>vertex(0, tileHeight / 2 + extrudeDY);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>vertex(0, tileHeight / 2);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>endShape(CLOSE);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>fill(topR, topG, topB, 255);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>beginShape();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>vertex(-tileSize / 2, extrudeDY);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>vertex(0, -tileHeight / 2 + extrudeDY);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>vertex(tileSize / 2, extrudeDY);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>vertex(0, tileHeight / 2 + extrudeDY);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>endShape(CLOSE);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>pop();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Draw stacks</p>
-<p class="p1"><span class="Apple-converted-space">  </span>for (let depth = 0; depth &lt; gridSize * 2 - 1; depth++) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>for (let i = Math.max(0, depth - gridSize + 1); i &lt;= Math.min(depth, gridSize - 1); i++) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>let j = depth - i;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>let x = offsetX + (i - j) * tileSize / 2;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>let y = offsetY + (i + j) * tileHeight / 2;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>let tile = tiles[i][j];</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>let extraDY = tile.dropOffset;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (tile.dropAnimStart &gt; 0) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let t = (millis() - tile.dropAnimStart) / 300;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (t &lt; 1) {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>t = easeInOutCubic(t);</p>
-<p class="p1"><span class="Apple-converted-space">          </span>extraDY = lerp(extrudeDY, 0, t);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>extraDY = 0;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>tile.dropAnimStart = 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>tile.dropOffset = extraDY;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>push();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>translate(x, y + extraDY);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>for (let k = 0; k &lt; tile.stack.length; k++) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let layer = tile.stack[k];</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let bottomDY = k * extrudeDY;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let topDY = bottomDY + extrudeDY;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>let baseCol = tileTypes[layer.type].base;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let lightAmount = k / 19;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let topR = baseCol.r + (255 - baseCol.r) * lightAmount * 0.7;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let topG = baseCol.g + (255 - baseCol.g) * lightAmount * 0.7;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let topB = baseCol.b + (255 - baseCol.b) * lightAmount * 0.7;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>let sideR = topR * 0.7 + 15;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let sideG = topG * 0.7 + 10;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let sideB = topB * 0.7;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>let strokeR = sideR * 0.8;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let strokeG = sideG * 0.8;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let strokeB = sideB * 0.8;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>let layerOffsetY = layer.fallOffset;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (layer.fallStart &gt; 0) {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>let t = (millis() - layer.fallStart) / 300;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>if (t &lt; 1) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>t = easeInOutCubic(t);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>layerOffsetY = lerp(fallFromHeight, 0, t);</p>
-<p class="p1"><span class="Apple-converted-space">          </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>layerOffsetY = 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>layer.fallStart = 0;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>}</p>
-<p class="p1"><span class="Apple-converted-space">          </span>layer.fallOffset = layerOffsetY;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>push();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>translate(0, layerOffsetY);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>stroke(strokeR, strokeG, strokeB);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>strokeWeight(0.5);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>fill(sideR, sideG, sideB, 255);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>beginShape();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vertex(-tileSize / 2, bottomDY);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vertex(-tileSize / 2, topDY);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vertex(0, topDY + tileHeight / 2);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vertex(0, bottomDY + tileHeight / 2);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>endShape(CLOSE);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>beginShape();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vertex(tileSize / 2, bottomDY);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vertex(tileSize / 2, topDY);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vertex(0, topDY + tileHeight / 2);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vertex(0, bottomDY + tileHeight / 2);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>endShape(CLOSE);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>fill(topR, topG, topB, 255);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>beginShape();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vertex(-tileSize / 2, topDY);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vertex(0, topDY - tileHeight / 2);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vertex(tileSize / 2, topDY);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vertex(0, topDY + tileHeight / 2);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>endShape(CLOSE);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>pop();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>pop();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Draw UI window</p>
-<p class="p1"><span class="Apple-converted-space">  </span>fill(34, 38, 57); // #222639</p>
-<p class="p1"><span class="Apple-converted-space">  </span>noStroke();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>rect(canvasWidth - 125, 75, 100, 320, 10); // 25px padding on all sides, rounded</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Draw selected tile name</p>
-<p class="p1"><span class="Apple-converted-space">  </span>textAlign(CENTER);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>textSize(16);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>fill(255);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>text(tileNames[selectedTileType] || 'None', canvasWidth * 0.5, 30); // 70px above buttons, centered</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Draw buttons</p>
-<p class="p1"><span class="Apple-converted-space">  </span>for (let btn of buttons) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let baseCol = btn.type &gt;= 0 &amp;&amp; btn.type &lt; 5 ? tileTypes[btn.type].base : { r: 100, g: 100, b: 100 }; // Default gray for non-tile buttons</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let isSelected = btn.type === selectedTileType;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (isSelected) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>stroke(255, 255, 255, 220); // Highlight stroke</p>
-<p class="p1"><span class="Apple-converted-space">      </span>strokeWeight(1);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>drawingContext.shadowColor = 'rgba(255, 255, 255, 0.8)'; // Intense glow</p>
-<p class="p1"><span class="Apple-converted-space">      </span>drawingContext.shadowBlur = 20;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>noStroke();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>drawingContext.shadowColor = 'rgba(0, 0, 0, 0.4)';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>drawingContext.shadowBlur = 8;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>fill(baseCol.r, baseCol.g, baseCol.b);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>rect(btn.x, btn.y, btn.size, btn.size, 10); // Rounded corners</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>drawingContext.shadowBlur = 0;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">function placeTile(force = false) {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>let offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>let offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>let dx = mouseX - offsetX;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>let dy = mouseY - offsetY;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>let u = dx / tileSize + dy / tileHeight;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>let v = dy / tileHeight - dx / tileSize;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>let i = floor(u + 0.5);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>let j = floor(v + 0.5);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>if (i &gt;= 0 &amp;&amp; i &lt; gridSize &amp;&amp; j &gt;= 0 &amp;&amp; j &lt; gridSize &amp;&amp; (force || i !== lastPlacedI || j !== lastPlacedJ)) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let tile = tiles[i][j];</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let stack = tile.stack;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let animTime = millis();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (stack.length &lt; 20) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>stack.push({ type: selectedTileType, fallStart: animTime, fallOffset: fallFromHeight });</p>
-<p class="p1"><span class="Apple-converted-space">    </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>let bottom = stack.shift();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>fallingTiles.push({</p>
-<p class="p1"><span class="Apple-converted-space">        </span>type: bottom.type,</p>
-<p class="p1"><span class="Apple-converted-space">        </span>posX: offsetX + (i - j) * tileSize / 2,</p>
-<p class="p1"><span class="Apple-converted-space">        </span>posY: offsetY + (i + j) * tileHeight / 2,</p>
-<p class="p1"><span class="Apple-converted-space">        </span>startTime: millis(),</p>
-<p class="p1"><span class="Apple-converted-space">        </span>rotationSpeed: random(-1, 1)</p>
-<p class="p1"><span class="Apple-converted-space">      </span>});</p>
-<p class="p1"><span class="Apple-converted-space">      </span>stack.push({ type: selectedTileType, fallStart: animTime, fallOffset: fallFromHeight });</p>
-<p class="p1"><span class="Apple-converted-space">      </span>tile.dropAnimStart = millis();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>tile.dropOffset = extrudeDY;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>lastPlacedI = i;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>lastPlacedJ = j;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">function mousePressed() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>for (let btn of buttons) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (mouseX &gt; btn.x &amp;&amp; mouseX &lt; btn.x + btn.size &amp;&amp; mouseY &gt; btn.y &amp;&amp; mouseY &lt; btn.y + btn.size) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>selectedTileType = btn.type;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>wasButtonClick = true;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>wasButtonClick = false;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>placeTile(true);</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">function mouseDragged() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>if (wasButtonClick) return;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>placeTile();</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">function mouseReleased() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>wasButtonClick = false;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>lastPlacedI = -1;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>lastPlacedJ = -1;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">function easeInOutCubic(t) {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>return t &lt; 0.5 ? 4 * t * t * t : 1 - pow(-2 * t + 2, 3) / 2;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">function easeOutQuad(t) {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>return 1 - (1 - t) * (1 - t);</p>
-<p class="p1">}</p>
-<p class="p1">&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+<script>
+let tiles = [];
+let tileSize = 48;
+let tileHeight = 24;
+let gridSize = 12;
+let selectedTileType = 0;
+let buttons = [];
+let wasButtonClick = false;
+let fallingTiles = [];
+let lastPlacedI = -1;
+let lastPlacedJ = -1;
+let canvasWidth = 800;
+let canvasHeight = 600;
+let offsetX;
+let offsetY;
+
+const heightPixel = 8;
+const extrudeDY = -heightPixel;
+const fallFromHeight = -300;
+
+const tileTypes = [
+  { base: { r: 19, g: 12, b: 28 } }, // Ringo
+  { base: { r: 57, g: 33, b: 54 } }, // Bingo
+  { base: { r: 138, g: 81, b: 72 } }, // Jingo
+  { base: { r: 187, g: 140, b: 135 } }, // Tango
+  { base: { r: 141, g: 66, b: 66 } }  // Mango
+];
+
+const tileNames = ['Ringo', 'Bingo', 'Jingo', 'Tango', 'Mango'];
+
+function setup() {
+  resizeCanvas(windowWidth * 0.9, windowHeight * 0.9);
+  canvasWidth = width;
+  canvasHeight = height;
+  tileSize = Math.min(canvasWidth, canvasHeight) / 16;
+  tileHeight = tileSize / 2;
+  offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
+  offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
+  initializeTiles();
+  initializeButtons();
+}
+
+function initializeTiles() {
+  for (let i = 0; i < gridSize; i++) {
+    tiles[i] = [];
+    for (let j = 0; j < gridSize; j++) {
+      tiles[i][j] = { stack: [], dropAnimStart: 0, dropOffset: 0 };
+    }
+  }
+}
+
+function initializeButtons() {
+  buttons = [];
+  if (canvasWidth < 500) { // Mobile threshold (e.g., iPhone SE ~320px)
+    let buttonSize = canvasWidth / 6;
+    for (let i = 0; i < 5; i++) {
+      buttons.push({ x: (i + 0.5) * buttonSize, y: 10, type: i, size: buttonSize - 10 });
+    }
+  } else {
+    for (let i = 0; i < 5; i++) {
+      buttons.push({ x: canvasWidth - 100, y: 100 + i * 60, type: i, size: 50 });
+    }
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth * 0.9, windowHeight * 0.9);
+  canvasWidth = width;
+  canvasHeight = height;
+  tileSize = Math.min(canvasWidth, canvasHeight) / 16;
+  tileHeight = tileSize / 2;
+  offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
+  offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
+  initializeTiles();
+  initializeButtons();
+}
+
+function draw() {
+  clear();
+
+  // Draw floor grid
+  for (let i = 0; i < gridSize; i++) {
+    for (let j = 0; j < gridSize; j++) {
+      let x = offsetX + (i - j) * tileSize / 2;
+      let y = offsetY + (i + j) * tileHeight / 2;
+      push();
+      translate(x, y);
+      stroke(0, 255, 255);
+      strokeWeight(0.5);
+      noFill();
+      beginShape();
+      vertex(-tileSize / 2, 0);
+      vertex(0, -tileHeight / 2);
+      vertex(tileSize / 2, 0);
+      vertex(0, tileHeight / 2);
+      endShape(CLOSE);
+      pop();
+    }
+  }
+
+  // Draw falling tiles
+  for (let fi = fallingTiles.length - 1; fi >= 0; fi--) {
+    let ft = fallingTiles[fi];
+    let t = (millis() - ft.startTime) / 2000;
+    if (t > 1) {
+      fallingTiles.splice(fi, 1);
+      continue;
+    }
+    let prog = easeOutQuad(t);
+    let curY = ft.posY + prog * 1200;
+    let curX = ft.posX;
+    let rot = prog * 720 * ft.rotationSpeed;
+
+    let baseCol = tileTypes[ft.type].base;
+    let topR = baseCol.r;
+    let topG = baseCol.g;
+    let topB = baseCol.b;
+    let sideR = topR * 0.7 + 15;
+    let sideG = topG * 0.7 + 10;
+    let sideB = topB * 0.7;
+    let strokeR = sideR * 0.8;
+    let strokeG = sideG * 0.8;
+    let strokeB = sideB * 0.8;
+
+    push();
+    translate(curX, curY);
+    rotate(rot);
+
+    stroke(strokeR, strokeG, strokeB);
+    strokeWeight(0.5);
+
+    fill(sideR, sideG, sideB, 255);
+    beginShape();
+    vertex(-tileSize / 2, 0);
+    vertex(-tileSize / 2, extrudeDY);
+    vertex(0, tileHeight / 2 + extrudeDY);
+    vertex(0, tileHeight / 2);
+    endShape(CLOSE);
+    beginShape();
+    vertex(tileSize / 2, 0);
+    vertex(tileSize / 2, extrudeDY);
+    vertex(0, tileHeight / 2 + extrudeDY);
+    vertex(0, tileHeight / 2);
+    endShape(CLOSE);
+
+    fill(topR, topG, topB, 255);
+    beginShape();
+    vertex(-tileSize / 2, extrudeDY);
+    vertex(0, -tileHeight / 2 + extrudeDY);
+    vertex(tileSize / 2, extrudeDY);
+    vertex(0, tileHeight / 2 + extrudeDY);
+    endShape(CLOSE);
+
+    pop();
+  }
+
+  // Draw stacks
+  for (let depth = 0; depth < gridSize * 2 - 1; depth++) {
+    for (let i = Math.max(0, depth - gridSize + 1); i <= Math.min(depth, gridSize - 1); i++) {
+      let j = depth - i;
+      let x = offsetX + (i - j) * tileSize / 2;
+      let y = offsetY + (i + j) * tileHeight / 2;
+      let tile = tiles[i][j];
+
+      let extraDY = tile.dropOffset;
+      if (tile.dropAnimStart > 0) {
+        let t = (millis() - tile.dropAnimStart) / 300;
+        if (t < 1) {
+          t = easeInOutCubic(t);
+          extraDY = lerp(extrudeDY, 0, t);
+        } else {
+          extraDY = 0;
+          tile.dropAnimStart = 0;
+        }
+        tile.dropOffset = extraDY;
+      }
+
+      push();
+      translate(x, y + extraDY);
+
+      for (let k = 0; k < tile.stack.length; k++) {
+        let layer = tile.stack[k];
+        let bottomDY = k * extrudeDY;
+        let topDY = bottomDY + extrudeDY;
+
+        let baseCol = tileTypes[layer.type].base;
+        let lightAmount = k / 19;
+        let topR = baseCol.r + (255 - baseCol.r) * lightAmount * 0.7;
+        let topG = baseCol.g + (255 - baseCol.g) * lightAmount * 0.7;
+        let topB = baseCol.b + (255 - baseCol.b) * lightAmount * 0.7;
+
+        let sideR = topR * 0.7 + 15;
+        let sideG = topG * 0.7 + 10;
+        let sideB = topB * 0.7;
+
+        let strokeR = sideR * 0.8;
+        let strokeG = sideG * 0.8;
+        let strokeB = sideB * 0.8;
+
+        let layerOffsetY = layer.fallOffset;
+        if (layer.fallStart > 0) {
+          let t = (millis() - layer.fallStart) / 300;
+          if (t < 1) {
+            t = easeInOutCubic(t);
+            layerOffsetY = lerp(fallFromHeight, 0, t);
+          } else {
+            layerOffsetY = 0;
+            layer.fallStart = 0;
+          }
+          layer.fallOffset = layerOffsetY;
+        }
+
+        push();
+        translate(0, layerOffsetY);
+
+        stroke(strokeR, strokeG, strokeB);
+        strokeWeight(0.5);
+
+        fill(sideR, sideG, sideB, 255);
+
+        beginShape();
+        vertex(-tileSize / 2, bottomDY);
+        vertex(-tileSize / 2, topDY);
+        vertex(0, topDY + tileHeight / 2);
+        vertex(0, bottomDY + tileHeight / 2);
+        endShape(CLOSE);
+
+        beginShape();
+        vertex(tileSize / 2, bottomDY);
+        vertex(tileSize / 2, topDY);
+        vertex(0, topDY + tileHeight / 2);
+        vertex(0, bottomDY + tileHeight / 2);
+        endShape(CLOSE);
+
+        fill(topR, topG, topB, 255);
+        beginShape();
+        vertex(-tileSize / 2, topDY);
+        vertex(0, topDY - tileHeight / 2);
+        vertex(tileSize / 2, topDY);
+        vertex(0, topDY + tileHeight / 2);
+        endShape(CLOSE);
+
+        pop();
+      }
+      pop();
+    }
+  }
+
+  // Draw UI window
+  fill(34, 38, 57); // #222639
+  noStroke();
+  rect(canvasWidth - 125, 75, 100, 320, 10); // 25px padding on all sides, rounded
+
+  // Draw selected tile name
+  textAlign(CENTER);
+  textSize(16);
+  fill(255);
+  text(tileNames[selectedTileType] || 'None', canvasWidth * 0.5, 30); // 70px above buttons, centered
+
+  // Draw buttons
+  for (let btn of buttons) {
+    let baseCol = btn.type >= 0 && btn.type < 5 ? tileTypes[btn.type].base : { r: 100, g: 100, b: 100 }; // Default gray for non-tile buttons
+    let isSelected = btn.type === selectedTileType;
+    if (isSelected) {
+      stroke(255, 255, 255, 220); // Highlight stroke
+      strokeWeight(1);
+      drawingContext.shadowColor = 'rgba(255, 255, 255, 0.8)'; // Intense glow
+      drawingContext.shadowBlur = 20;
+    } else {
+      noStroke();
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.4)';
+      drawingContext.shadowBlur = 8;
+    }
+    fill(baseCol.r, baseCol.g, baseCol.b);
+    rect(btn.x, btn.y, btn.size, btn.size, 10); // Rounded corners
+  }
+  drawingContext.shadowBlur = 0;
+}
+
+function placeTile(force = false) {
+  let offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
+  let offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
+  let dx = mouseX - offsetX;
+  let dy = mouseY - offsetY;
+  let u = dx / tileSize + dy / tileHeight;
+  let v = dy / tileHeight - dx / tileSize;
+  let i = floor(u + 0.5);
+  let j = floor(v + 0.5);
+  if (i >= 0 && i < gridSize && j >= 0 && j < gridSize && (force || i !== lastPlacedI || j !== lastPlacedJ)) {
+    let tile = tiles[i][j];
+    let stack = tile.stack;
+    let animTime = millis();
+    if (stack.length < 20) {
+      stack.push({ type: selectedTileType, fallStart: animTime, fallOffset: fallFromHeight });
+    } else {
+      let bottom = stack.shift();
+      fallingTiles.push({
+        type: bottom.type,
+        posX: offsetX + (i - j) * tileSize / 2,
+        posY: offsetY + (i + j) * tileHeight / 2,
+        startTime: millis(),
+        rotationSpeed: random(-1, 1)
+      });
+      stack.push({ type: selectedTileType, fallStart: animTime, fallOffset: fallFromHeight });
+      tile.dropAnimStart = millis();
+      tile.dropOffset = extrudeDY;
+    }
+    lastPlacedI = i;
+    lastPlacedJ = j;
+  }
+}
+
+function mousePressed() {
+  for (let btn of buttons) {
+    if (mouseX > btn.x && mouseX < btn.x + btn.size && mouseY > btn.y && mouseY < btn.y + btn.size) {
+      selectedTileType = btn.type;
+      wasButtonClick = true;
+      return;
+    }
+  }
+  wasButtonClick = false;
+  placeTile(true);
+}
+
+function mouseDragged() {
+  if (wasButtonClick) return;
+  placeTile();
+}
+
+function mouseReleased() {
+  wasButtonClick = false;
+  lastPlacedI = -1;
+  lastPlacedJ = -1;
+}
+
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - pow(-2 * t + 2, 3) / 2;
+}
+
+function easeOutQuad(t) {
+  return 1 - (1 - t) * (1 - t);
+}
+</script>
 </body>
 </html>
