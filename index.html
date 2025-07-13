@@ -45,7 +45,7 @@ function setup() {
   canvasHeight = height;
   tileSize = Math.min(canvasWidth, canvasHeight) / 16;
   tileHeight = tileSize / 2;
-  offsetX = (canvasWidth - (gridSize * tileSize)) / 2; // Center based on grid width
+  offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2; // Center based on isometric width
   offsetY = (canvasHeight - (gridSize * tileHeight)) / 2; // Center based on grid height
   initializeTiles();
   initializeButtons();
@@ -63,9 +63,9 @@ function initializeTiles() {
 function initializeButtons() {
   buttons = [];
   if (canvasWidth < 500) { // Mobile threshold (e.g., iPhone SE ~320px)
-    let buttonSize = canvasWidth / 5; // 5 buttons across, adjusted for spacing
+    let buttonSize = canvasWidth / 5;
     for (let i = 0; i < 5; i++) {
-      buttons.push({ x: (i * buttonSize) + (buttonSize / 2), y: 50, type: i, size: buttonSize - 10 });
+      buttons.push({ x: (i * buttonSize) + (buttonSize / 2), y: 10, type: i, size: buttonSize - 10 });
     }
   } else {
     for (let i = 0; i < 5; i++) {
@@ -80,7 +80,7 @@ function windowResized() {
   canvasHeight = height;
   tileSize = Math.min(canvasWidth, canvasHeight) / 16;
   tileHeight = tileSize / 2;
-  offsetX = (canvasWidth - (gridSize * tileSize)) / 2;
+  offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
   offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
   initializeTiles();
   initializeButtons();
