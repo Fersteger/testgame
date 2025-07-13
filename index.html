@@ -4,7 +4,7 @@
   <title>Isometric Tilemap Game</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <style>
-    body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(#353458, #251725); overflow: hidden; touch-action: manipulation; }
+    body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(#353458, #251725); overflow: hidden; }
     canvas { display: block; max-width: 100%; max-height: 100vh; }
   </style>
 </head>
@@ -14,7 +14,7 @@ let tiles = [];
 let tileSize = 48;
 let tileHeight = 24;
 let gridSize = 12;
-let selectedTileType = 0;
+let selectedTileType = -1; // Start with None
 let buttons = [];
 let wasButtonClick = false;
 let fallingTiles = [];
@@ -24,8 +24,7 @@ let canvasWidth = 800;
 let canvasHeight = 600;
 let offsetX;
 let offsetY;
-let isMobile = false;
-let clickHighlights = []; // For tracking click highlights
+let clickHighlights = [];
 
 const heightPixel = 8;
 const extrudeDY = -heightPixel;
@@ -42,11 +41,10 @@ const tileTypes = [
 const tileNames = ['Ringo', 'Bingo', 'Jingo', 'Tango', 'Mango'];
 
 function setup() {
-  isMobile = window.innerWidth < 480;
   resizeCanvas(windowWidth * 0.9, windowHeight * 0.9);
   canvasWidth = width;
   canvasHeight = height;
-  tileSize = Math.min(canvasWidth, canvasHeight) / (isMobile ? 24 : 16);
+  tileSize = Math.min(canvasWidth, canvasHeight) / 16;
   tileHeight = tileSize / 2;
   offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
   offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
@@ -65,24 +63,16 @@ function initializeTiles() {
 
 function initializeButtons() {
   buttons = [];
-  if (isMobile) {
-    let buttonSize = canvasWidth / 5;
-    for (let i = 0; i < 5; i++) {
-      buttons.push({ x: (i * buttonSize) + (buttonSize / 2), y: 10, type: i, size: buttonSize - 10 });
-    }
-  } else {
-    for (let i = 0; i < 5; i++) {
-      buttons.push({ x: canvasWidth - 100, y: 100 + i * 60, type: i, size: 50 });
-    }
+  for (let i = 0; i < 5; i++) {
+    buttons.push({ x: canvasWidth - 100, y: 100 + i * 60, type: i, size: 50 });
   }
 }
 
 function windowResized() {
-  isMobile = window.innerWidth < 480;
   resizeCanvas(windowWidth * 0.9, windowHeight * 0.9);
   canvasWidth = width;
   canvasHeight = height;
-  tileSize = Math.min(canvasWidth, canvasHeight) / (isMobile ? 24 : 16);
+  tileSize = Math.min(canvasWidth, canvasHeight) / 16;
   tileHeight = tileSize / 2;
   offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
   offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
@@ -135,7 +125,7 @@ function draw() {
   // Draw falling tiles
   for (let fi = fallingTiles.length - 1; fi >= 0; fi--) {
     let ft = fallingTiles[fi];
-    let t = (millis() - ft.startTime) / 3000; // Kept at 3000ms for dead tiles
+    let t = (millis() - ft.startTime) / 3000;
     if (t > 1) {
       fallingTiles.splice(fi, 1);
       continue;
@@ -198,7 +188,7 @@ function draw() {
 
       let extraDY = tile.dropOffset;
       if (tile.dropAnimStart > 0) {
-        let t = (millis() - tile.dropAnimStart) / 500; // Kept at 500ms
+        let t = (millis() - tile.dropAnimStart) / 500;
         if (t < 1) {
           t = easeInOutCubic(t);
           extraDY = lerp(extrudeDY, 0, t);
@@ -233,7 +223,7 @@ function draw() {
 
         let layerOffsetY = layer.fallOffset;
         if (layer.fallStart > 0) {
-          let t = (millis() - layer.fallStart) / 750; // Reduced to 750ms, no easing
+          let t = (millis() - layer.fallStart) / 375;
           if (t < 1) {
             layerOffsetY = fallFromHeight + (t * (0 - fallFromHeight)); // Linear drop
           } else {
@@ -282,21 +272,13 @@ function draw() {
   // Draw UI window
   fill(34, 38, 57); // #222639
   noStroke();
-  if (isMobile) {
-    rect(0, 100, canvasWidth, canvasHeight - 100, 10); // Full-width window on mobile
-  } else {
-    rect(canvasWidth - 125, 75, 100, 320, 10); // Right-side window on desktop
-  }
+  rect(canvasWidth - 125, 75, 100, 320, 10); // Right-side window
 
   // Draw selected tile name
   textAlign(CENTER);
   textSize(16);
   fill(255);
-  if (isMobile) {
-    text(tileNames[selectedTileType] || 'None', canvasWidth / 2, 30); // Mobile: above buttons at top
-  } else {
-    text(tileNames[selectedTileType] || 'None', canvasWidth - 50, 50); // Desktop: centered above buttons
-  }
+  text(selectedTileType === -1 ? 'None' : tileNames[selectedTileType], canvasWidth - 50, 50); // Start with None
 
   // Draw buttons
   for (let btn of buttons) {
@@ -322,7 +304,7 @@ function placeTile(force = false) {
   let offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
   let offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
   let dx = mouseX - offsetX;
-  let dy = mouseY - offsetY - (isMobile ? 50 : 0);
+  let dy = mouseY - offsetY;
   let u = dx / tileSize + dy / tileHeight;
   let v = dy / tileHeight - dx / tileSize;
   let i = floor(u + 0.5);
@@ -331,9 +313,9 @@ function placeTile(force = false) {
     let tile = tiles[i][j];
     let stack = tile.stack;
     let animTime = millis();
-    if (stack.length < 6) {
+    if (stack.length < 10) {
       stack.push({ type: selectedTileType, fallStart: animTime, fallOffset: fallFromHeight });
-      clickHighlights.push({ i: i, j: j, startTime: animTime }); // Add click highlight
+      if (selectedTileType !== -1) clickHighlights.push({ i: i, j: j, startTime: animTime }); // Add click highlight only if a tile is selected
     } else {
       let bottom = stack.shift();
       fallingTiles.push({
@@ -355,7 +337,11 @@ function placeTile(force = false) {
 function mousePressed() {
   for (let btn of buttons) {
     if (mouseX > btn.x && mouseX < btn.x + btn.size && mouseY > btn.y && mouseY < btn.y + btn.size) {
-      selectedTileType = btn.type;
+      if (btn.type === selectedTileType) {
+        selectedTileType = -1; // Reset to None if same button is clicked
+      } else {
+        selectedTileType = btn.type;
+      }
       wasButtonClick = true;
       return;
     }
