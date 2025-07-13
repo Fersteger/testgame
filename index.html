@@ -41,11 +41,11 @@ const tileTypes = [
 const tileNames = ['Ringo', 'Bingo', 'Jingo', 'Tango', 'Mango'];
 
 function setup() {
-  isMobile = window.innerWidth < 480; // Adjusted threshold for smaller devices
+  isMobile = window.innerWidth < 480;
   resizeCanvas(windowWidth * 0.9, windowHeight * 0.9);
   canvasWidth = width;
   canvasHeight = height;
-  tileSize = Math.min(canvasWidth, canvasHeight) / 16;
+  tileSize = Math.min(canvasWidth, canvasHeight) / (isMobile ? 24 : 16);
   tileHeight = tileSize / 2;
   offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
   offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
@@ -77,11 +77,11 @@ function initializeButtons() {
 }
 
 function windowResized() {
-  isMobile = window.innerWidth < 480; // Update on resize
+  isMobile = window.innerWidth < 480;
   resizeCanvas(windowWidth * 0.9, windowHeight * 0.9);
   canvasWidth = width;
   canvasHeight = height;
-  tileSize = Math.min(canvasWidth, canvasHeight) / 16;
+  tileSize = Math.min(canvasWidth, canvasHeight) / (isMobile ? 24 : 16);
   tileHeight = tileSize / 2;
   offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
   offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
@@ -198,10 +198,10 @@ function draw() {
         let topDY = bottomDY + extrudeDY;
 
         let baseCol = tileTypes[layer.type].base;
-        let lightAmount = k / 19;
-        let topR = baseCol.r + (255 - baseCol.r) * lightAmount * 0.7;
-        let topG = baseCol.g + (255 - baseCol.g) * lightAmount * 0.7;
-        let topB = baseCol.b + (255 - baseCol.b) * lightAmount * 0.7;
+        let lightAmount = min(k / 5, 0.8); // Lighten up to 80% of difference to 255, based on stack height (max 6)
+        let topR = baseCol.r + (255 - baseCol.r) * lightAmount;
+        let topG = baseCol.g + (255 - baseCol.g) * lightAmount;
+        let topB = baseCol.b + (255 - baseCol.b) * lightAmount;
 
         let sideR = topR * 0.7 + 15;
         let sideG = topG * 0.7 + 10;
@@ -303,7 +303,7 @@ function placeTile(force = false) {
   let offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
   let offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
   let dx = mouseX - offsetX;
-  let dy = mouseY - offsetY + (isMobile ? 0 : 0); // Adjust for mobile offset if needed
+  let dy = mouseY - offsetY - (isMobile ? 50 : 0);
   let u = dx / tileSize + dy / tileHeight;
   let v = dy / tileHeight - dx / tileSize;
   let i = floor(u + 0.5);
@@ -312,7 +312,7 @@ function placeTile(force = false) {
     let tile = tiles[i][j];
     let stack = tile.stack;
     let animTime = millis();
-    if (stack.length < 20) {
+    if (stack.length < 6) { // Reduced to 6 tiles for falling
       stack.push({ type: selectedTileType, fallStart: animTime, fallOffset: fallFromHeight });
     } else {
       let bottom = stack.shift();
