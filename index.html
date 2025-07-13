@@ -4,7 +4,7 @@
   <title>Isometric Tilemap Game</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <style>
-    body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(#353458, #251725); overflow: hidden; }
+    body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(#353458, #251725); overflow: hidden; touch-action: manipulation; }
     canvas { display: block; max-width: 100%; max-height: 100vh; }
   </style>
 </head>
@@ -24,7 +24,7 @@ let canvasWidth = 800;
 let canvasHeight = 600;
 let offsetX;
 let offsetY;
-let isMobile = window.innerWidth < 500; // Flag for mobile detection
+let isMobile = false;
 
 const heightPixel = 8;
 const extrudeDY = -heightPixel;
@@ -41,13 +41,14 @@ const tileTypes = [
 const tileNames = ['Ringo', 'Bingo', 'Jingo', 'Tango', 'Mango'];
 
 function setup() {
+  isMobile = window.innerWidth < 480; // Adjusted threshold for smaller devices
   resizeCanvas(windowWidth * 0.9, windowHeight * 0.9);
   canvasWidth = width;
   canvasHeight = height;
   tileSize = Math.min(canvasWidth, canvasHeight) / 16;
   tileHeight = tileSize / 2;
-  offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2; // Center based on isometric width
-  offsetY = (canvasHeight - (gridSize * tileHeight)) / 2; // Center based on grid height
+  offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
+  offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
   initializeTiles();
   initializeButtons();
 }
@@ -76,10 +77,10 @@ function initializeButtons() {
 }
 
 function windowResized() {
+  isMobile = window.innerWidth < 480; // Update on resize
   resizeCanvas(windowWidth * 0.9, windowHeight * 0.9);
   canvasWidth = width;
   canvasHeight = height;
-  isMobile = window.innerWidth < 500; // Update mobile flag on resize
   tileSize = Math.min(canvasWidth, canvasHeight) / 16;
   tileHeight = tileSize / 2;
   offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
@@ -302,7 +303,7 @@ function placeTile(force = false) {
   let offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
   let offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
   let dx = mouseX - offsetX;
-  let dy = mouseY - offsetY;
+  let dy = mouseY - offsetY + (isMobile ? 0 : 0); // Adjust for mobile offset if needed
   let u = dx / tileSize + dy / tileHeight;
   let v = dy / tileHeight - dx / tileSize;
   let i = floor(u + 0.5);
