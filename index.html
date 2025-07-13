@@ -45,8 +45,8 @@ function setup() {
   canvasHeight = height;
   tileSize = Math.min(canvasWidth, canvasHeight) / 16;
   tileHeight = tileSize / 2;
-  offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
-  offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
+  offsetX = (canvasWidth - (gridSize * tileSize)) / 2; // Center based on grid width
+  offsetY = (canvasHeight - (gridSize * tileHeight)) / 2; // Center based on grid height
   initializeTiles();
   initializeButtons();
 }
@@ -63,9 +63,9 @@ function initializeTiles() {
 function initializeButtons() {
   buttons = [];
   if (canvasWidth < 500) { // Mobile threshold (e.g., iPhone SE ~320px)
-    let buttonSize = canvasWidth / 6;
+    let buttonSize = canvasWidth / 5; // 5 buttons across, adjusted for spacing
     for (let i = 0; i < 5; i++) {
-      buttons.push({ x: (i + 0.5) * buttonSize, y: 10, type: i, size: buttonSize - 10 });
+      buttons.push({ x: (i * buttonSize) + (buttonSize / 2), y: 50, type: i, size: buttonSize - 10 });
     }
   } else {
     for (let i = 0; i < 5; i++) {
@@ -80,7 +80,7 @@ function windowResized() {
   canvasHeight = height;
   tileSize = Math.min(canvasWidth, canvasHeight) / 16;
   tileHeight = tileSize / 2;
-  offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
+  offsetX = (canvasWidth - (gridSize * tileSize)) / 2;
   offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
   initializeTiles();
   initializeButtons();
@@ -260,22 +260,30 @@ function draw() {
   // Draw UI window
   fill(34, 38, 57); // #222639
   noStroke();
-  rect(canvasWidth - 125, 75, 100, 320, 10); // 25px padding on all sides, rounded
+  if (canvasWidth < 500) {
+    rect(0, 100, canvasWidth, canvasHeight - 100, 10); // Full-width window on mobile
+  } else {
+    rect(canvasWidth - 125, 75, 100, 320, 10); // Right-side window on desktop
+  }
 
   // Draw selected tile name
   textAlign(CENTER);
   textSize(16);
   fill(255);
-  text(tileNames[selectedTileType] || 'None', canvasWidth * 0.5, 30); // 70px above buttons, centered
+  if (canvasWidth < 500) {
+    text(tileNames[selectedTileType] || 'None', canvasWidth / 2, 30); // Mobile: above buttons at top
+  } else {
+    text(tileNames[selectedTileType] || 'None', canvasWidth - 50, 50); // Desktop: centered above buttons
+  }
 
   // Draw buttons
   for (let btn of buttons) {
-    let baseCol = btn.type >= 0 && btn.type < 5 ? tileTypes[btn.type].base : { r: 100, g: 100, b: 100 }; // Default gray for non-tile buttons
+    let baseCol = btn.type >= 0 && btn.type < 5 ? tileTypes[btn.type].base : { r: 100, g: 100, b: 100 };
     let isSelected = btn.type === selectedTileType;
     if (isSelected) {
-      stroke(255, 255, 255, 220); // Highlight stroke
+      stroke(255, 255, 255, 220);
       strokeWeight(1);
-      drawingContext.shadowColor = 'rgba(255, 255, 255, 0.8)'; // Intense glow
+      drawingContext.shadowColor = 'rgba(255, 255, 255, 0.8)';
       drawingContext.shadowBlur = 20;
     } else {
       noStroke();
@@ -283,13 +291,13 @@ function draw() {
       drawingContext.shadowBlur = 8;
     }
     fill(baseCol.r, baseCol.g, baseCol.b);
-    rect(btn.x, btn.y, btn.size, btn.size, 10); // Rounded corners
+    rect(btn.x, btn.y, btn.size, btn.size, 10);
   }
   drawingContext.shadowBlur = 0;
 }
 
 function placeTile(force = false) {
-  let offsetX = (canvasWidth - (gridSize * tileSize / 2)) / 2;
+  let offsetX = (canvasWidth - (gridSize * tileSize)) / 2;
   let offsetY = (canvasHeight - (gridSize * tileHeight)) / 2;
   let dx = mouseX - offsetX;
   let dy = mouseY - offsetY;
