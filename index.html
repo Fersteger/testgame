@@ -25,6 +25,7 @@ let canvasHeight = 600;
 let offsetX;
 let offsetY;
 let isMobile = false;
+let clickHighlights = []; // For tracking click highlights
 
 const heightPixel = 8;
 const extrudeDY = -heightPixel;
@@ -92,7 +93,7 @@ function windowResized() {
 function draw() {
   clear();
 
-  // Draw floor grid
+  // Draw floor grid with highlights
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
       let x = offsetX + (i - j) * tileSize / 2;
@@ -108,6 +109,25 @@ function draw() {
       vertex(tileSize / 2, 0);
       vertex(0, tileHeight / 2);
       endShape(CLOSE);
+
+      // Draw click highlight if present
+      for (let h = clickHighlights.length - 1; h >= 0; h--) {
+        let highlight = clickHighlights[h];
+        if (highlight.i === i && highlight.j === j) {
+          let t = (millis() - highlight.startTime) / 500;
+          if (t < 1) {
+            fill(173, 216, 230, 100 * (1 - t)); // Light blue fade
+            beginShape();
+            vertex(-tileSize / 2, 0);
+            vertex(0, -tileHeight / 2);
+            vertex(tileSize / 2, 0);
+            vertex(0, tileHeight / 2);
+            endShape(CLOSE);
+          } else {
+            clickHighlights.splice(h, 1);
+          }
+        }
+      }
       pop();
     }
   }
@@ -115,7 +135,7 @@ function draw() {
   // Draw falling tiles
   for (let fi = fallingTiles.length - 1; fi >= 0; fi--) {
     let ft = fallingTiles[fi];
-    let t = (millis() - ft.startTime) / 2000;
+    let t = (millis() - ft.startTime) / 3000; // Kept at 3000ms for dead tiles
     if (t > 1) {
       fallingTiles.splice(fi, 1);
       continue;
@@ -178,7 +198,7 @@ function draw() {
 
       let extraDY = tile.dropOffset;
       if (tile.dropAnimStart > 0) {
-        let t = (millis() - tile.dropAnimStart) / 300;
+        let t = (millis() - tile.dropAnimStart) / 500; // Kept at 500ms
         if (t < 1) {
           t = easeInOutCubic(t);
           extraDY = lerp(extrudeDY, 0, t);
@@ -198,7 +218,7 @@ function draw() {
         let topDY = bottomDY + extrudeDY;
 
         let baseCol = tileTypes[layer.type].base;
-        let lightAmount = min(k / 5, 0.8); // Lighten up to 80% of difference to 255, based on stack height (max 6)
+        let lightAmount = min(k / 5, 0.8);
         let topR = baseCol.r + (255 - baseCol.r) * lightAmount;
         let topG = baseCol.g + (255 - baseCol.g) * lightAmount;
         let topB = baseCol.b + (255 - baseCol.b) * lightAmount;
@@ -213,10 +233,9 @@ function draw() {
 
         let layerOffsetY = layer.fallOffset;
         if (layer.fallStart > 0) {
-          let t = (millis() - layer.fallStart) / 300;
+          let t = (millis() - layer.fallStart) / 750; // Reduced to 750ms, no easing
           if (t < 1) {
-            t = easeInOutCubic(t);
-            layerOffsetY = lerp(fallFromHeight, 0, t);
+            layerOffsetY = fallFromHeight + (t * (0 - fallFromHeight)); // Linear drop
           } else {
             layerOffsetY = 0;
             layer.fallStart = 0;
@@ -312,8 +331,9 @@ function placeTile(force = false) {
     let tile = tiles[i][j];
     let stack = tile.stack;
     let animTime = millis();
-    if (stack.length < 6) { // Reduced to 6 tiles for falling
+    if (stack.length < 6) {
       stack.push({ type: selectedTileType, fallStart: animTime, fallOffset: fallFromHeight });
+      clickHighlights.push({ i: i, j: j, startTime: animTime }); // Add click highlight
     } else {
       let bottom = stack.shift();
       fallingTiles.push({
